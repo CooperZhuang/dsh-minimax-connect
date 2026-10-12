@@ -1,0 +1,9 @@
+node_modules/
+*.log
+*.bak
+*.bak-*
+.bak-*/
+auth.json
+auth-state.json
+.DS_Store
+Thumbs.db

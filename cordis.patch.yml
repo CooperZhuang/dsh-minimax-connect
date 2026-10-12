@@ -1,0 +1,12 @@
+# Register the MiniMax (Mavis) provider without changing the profile's default
+# model. The plugin reuses the MiniMax Code desktop app's own sign-in; no
+# separate OAuth flow is started.
+#
+# The row name is the package specifier, and it must equal the `name` field of
+# this package.json verbatim. The host discovers the client half through
+# `nearestPackage`, which compares the row specifier to the nearest manifest's
+# `name` and silently drops the client bundle (no error, no log) on any
+# mismatch — including bare-vs-scoped.
+- insert:
+    - id: llm-minimax
+      name: "dsh-minimax-connect"
