@@ -25,10 +25,13 @@ Upstream 0.1.0 targets the 0.2.0 line. On `DSH Desktop Beta 2.0.18-beta.1 / kern
 
 The picker group is **MiniMax Code**; the reasoning ladder is **xhigh / max** (default `max`). With no level selected the request carries no thinking block at all, which is the provider's own default — the same thing the first-party client's `default` does.
 
+The dependency declaration is aligned with 0.2.1-rc.2 as well: every `@deepseek-ai/dsh-*` peer sits in the wide `>=0.2.0-rc.0 <0.3` range (deliberately **not** narrowed to `^0.2.1-rc.2`, so later 0.2.x kernels keep working), and `@earendil-works/pi-ai` moved from `>=0.85.0 <1.0.0` to `>=0.85.0 <2.0.0` — the 0.2.1-rc.2 kernel ships pi-ai 1.x itself (`dsh-llm-pi-ai@0.2.1-rc.2` requires `^1.1.0`). The 0.2.x adapter also declares `auth` (credential store + ambient auth context) as required, and the plugin now passes it explicitly; the runtime behaviour is unchanged.
+
 ```bash
 node test/rc2-fixes.mjs    # ladder, image target, adapter wiring
 node test/host-apply.mjs   # apply(): route id, configurable directory, settings policy, no warnings
 node test/auth-retry.mjs    # 401 detection and the renew-and-replay path
+node test/peer-ranges.mjs   # peer ranges: admit 0.2.1-rc.2, stay wide, admit the kernel's pi-ai
 ```
 
 ---
