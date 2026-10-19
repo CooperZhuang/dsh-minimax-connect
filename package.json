@@ -2,7 +2,7 @@
   "name": "dsh-minimax-connect",
   "displayName": "DSH Connect MiniMax",
   "description": "Use the MiniMax Code (Mavis) subscription already signed in on this machine as a DSH model provider, fixed for the 0.2.1 route/settings/image contracts.",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "author": "VICqiufeeng",
   "type": "module",
   "engines": {
