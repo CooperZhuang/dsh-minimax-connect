@@ -20,6 +20,7 @@ Upstream 0.1.0 targets the 0.2.0 line. On `DSH Desktop Beta 2.0.18-beta.1 / kern
 | `Image request width must be a positive integer.` | A 0.2.x adapter derives each image target from `profile.requestImagePixelBudget` / `requestImageMaxBytes`; unset → `target.width === undefined` | Declare `IMAGE_BUDGET` and wire the 0.2.x `resolveImageAccess` hook (`resolveImageAttachmentAccess(attachments, mapHostPath, ref)`) |
 | Thinking levels do not match the wanted ladder | No `thinkingLevelMap` on the model descriptor, so pi-ai uses its default ladder | Declare `xhigh` / `max` explicitly (every other level pinned to `null`) with `compat.forceAdaptiveThinking`; `off` must stay `null` because the gateway rejects `thinking.type="disabled"` |
 | `host settings service has no installSection API` | 0.2.1 has no `installSection` | Use `settings.configure({ auto: false })`; the card keeps using its own `/plugins/...` routes |
+| Occasional `401 {"error":"invalid access token"}` | The header getter renewed as a side effect, and the gateway invalidates the previous access token the moment a refresh rotates it — so the request that triggered the renewal sent the token it had just killed (measured: the failing turn opened 234 ms after the renewal answered) | The renewal moved into the adapter's awaited pre-flight hook, the getter became a pure read, and `withAuthRetry` renews and replays a turn the provider refused |
 | `configurable provider "minimax" is already declared` | llm-pi-ai declares every catalog provider, `minimax` included | Route id is now **`minimax-code`**, so the Models page points at this plugin rather than the API-key route |
 
 The picker group is **MiniMax Code**; the reasoning ladder is **xhigh / max** (default `max`). With no level selected the request carries no thinking block at all, which is the provider's own default — the same thing the first-party client's `default` does.
@@ -27,6 +28,7 @@ The picker group is **MiniMax Code**; the reasoning ladder is **xhigh / max** (d
 ```bash
 node test/rc2-fixes.mjs    # ladder, image target, adapter wiring
 node test/host-apply.mjs   # apply(): route id, configurable directory, settings policy, no warnings
+node test/auth-retry.mjs    # 401 detection and the renew-and-replay path
 ```
 
 ---

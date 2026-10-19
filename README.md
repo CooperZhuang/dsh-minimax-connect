@@ -21,6 +21,7 @@ English: [README.en.md](README.en.md)
 | 发图报 `Image request width must be a positive integer.` | 0.2.x 适配器从 `profile.requestImagePixelBudget` / `requestImageMaxBytes` 推导每张图的目标尺寸，插件没声明 → `target.width` 是 `undefined` | 补 `IMAGE_BUDGET`（2048×2048 像素 / 1 MiB 编码 / 20 MiB 累计），并接上 0.2.x 的 `resolveImageAccess`（`resolveImageAttachmentAccess(attachments, mapHostPath, ref)`） |
 | 思考强度档位不对 | 模型描述符没给 `thinkingLevelMap`，pi-ai 用默认阶梯 | 显式声明 `xhigh` / `max` 两档（其余档位钉 `null`）并打开 `compat.forceAdaptiveThinking`；`off` 必须钉 `null`——网关实测拒绝 `thinking.type="disabled"`（`model requires adaptive thinking`） |
 | 日志 `host settings service has no installSection API` | 0.2.1 的 settings 服务没有 `installSection` | 改用 0.2.x 的 `settings.configure({ auto: false })`（声明"本插件自带页面"），卡片走自己的 `/plugins/...` 路由 |
+| 偶发 `401 {"error":"invalid access token"}`（界面提示"本轮运行失败：API 密钥无效"） | 请求头 getter 有"顺手续期"的副作用：网关在 refresh 轮换时**立即作废**上一个 access token，于是触发续期的那个请求自己带着刚被作废的 token 发出去（实测：续期成功 234 ms 后那一轮被拒） | 续期挪到适配器的**可等待前置钩子**（`resolveApiKey`），请求头 getter 变成纯读；再加上 `withAuthRetry`：被 401 拒了就在续期后**重发一次**该轮 |
 | 日志 `configurable provider "minimax" is already declared` | llm-pi-ai 会把 pi-ai 目录里所有 provider 声明成可配置项，`minimax` 已被占 | 路由 id 改为 **`minimax-code`**：不再撞名，`设置 → 模型` 里也能正确指向本插件而非 API Key 通道 |
 
 因此模型选择器里的分组是 **MiniMax Code**，推理等级只有 **xhigh / max** 两档（默认 `max`；不选时请求不带 thinking 字段，落到网关自己的默认档，等同官方客户端的 `default`）。
@@ -30,6 +31,7 @@ English: [README.en.md](README.en.md)
 ```bash
 node test/rc2-fixes.mjs    # 思考阶梯、图片目标尺寸、适配器接线
 node test/host-apply.mjs   # apply() 全流程：路由 id、可配置目录、settings 策略、无 warning
+node test/auth-retry.mjs    # 401 识别与"续期后重发一次"
 ```
 
 安装（本机开发，`link:` 便于改完重启即生效）：

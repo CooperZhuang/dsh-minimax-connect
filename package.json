@@ -69,6 +69,6 @@
     "react": "^18.2.0"
   },
   "scripts": {
-    "test": "node test/rc2-fixes.mjs && node test/host-apply.mjs"
+    "test": "node test/rc2-fixes.mjs && node test/host-apply.mjs && node test/auth-retry.mjs"
   }
 }
