@@ -11,6 +11,38 @@ English: [README.en.md](README.en.md)
 
 ---
 
+## 本 fork：适配 DSH 0.2.1-rc.2
+
+上游（`VICqiufeeng/dsh-minimax-connect` 0.1.0）是按 0.2.0 写的，在本机
+`DSH Desktop Beta 2.0.18-beta.1 / 内核 0.2.1-rc.2` 上实测有三处硬伤，本 fork 全部修掉并加了回归测试：
+
+| 症状 | 根因 | 修复 |
+|---|---|---|
+| 发图报 `Image request width must be a positive integer.` | 0.2.x 适配器从 `profile.requestImagePixelBudget` / `requestImageMaxBytes` 推导每张图的目标尺寸，插件没声明 → `target.width` 是 `undefined` | 补 `IMAGE_BUDGET`（2048×2048 像素 / 1 MiB 编码 / 20 MiB 累计），并接上 0.2.x 的 `resolveImageAccess`（`resolveImageAttachmentAccess(attachments, mapHostPath, ref)`） |
+| 思考强度档位不对 | 模型描述符没给 `thinkingLevelMap`，pi-ai 用默认阶梯 | 显式声明 `xhigh` / `max` 两档（其余档位钉 `null`）并打开 `compat.forceAdaptiveThinking`；`off` 必须钉 `null`——网关实测拒绝 `thinking.type="disabled"`（`model requires adaptive thinking`） |
+| 日志 `host settings service has no installSection API` | 0.2.1 的 settings 服务没有 `installSection` | 改用 0.2.x 的 `settings.configure({ auto: false })`（声明"本插件自带页面"），卡片走自己的 `/plugins/...` 路由 |
+| 日志 `configurable provider "minimax" is already declared` | llm-pi-ai 会把 pi-ai 目录里所有 provider 声明成可配置项，`minimax` 已被占 | 路由 id 改为 **`minimax-code`**：不再撞名，`设置 → 模型` 里也能正确指向本插件而非 API Key 通道 |
+
+因此模型选择器里的分组是 **MiniMax Code**，推理等级只有 **xhigh / max** 两档（默认 `max`；不选时请求不带 thinking 字段，落到网关自己的默认档，等同官方客户端的 `default`）。
+
+回归测试（用宿主自带的包，不需要起宿主）：
+
+```bash
+node test/rc2-fixes.mjs    # 思考阶梯、图片目标尺寸、适配器接线
+node test/host-apply.mjs   # apply() 全流程：路由 id、可配置目录、settings 策略、无 warning
+```
+
+安装（本机开发，`link:` 便于改完重启即生效）：
+
+```bash
+pnpm --dir ~/.dsh/profiles/desktop add --ignore-scripts \
+  "dsh-minimax-connect@link:/Users/cooper/Documents/Code/dsh-minimax-connect"
+```
+
+再把 `dsh-minimax-connect` 放进该 profile `package.json` 的 `dsh.profile.bundles`，重启 DSH 生效。
+
+---
+
 ## 为什么不需要"反代"
 
 MiniMax Code 的推理端点**本身就是 Anthropic Messages 协议**，DSH 的 `pi-ai` 原生支持该协议。所以直接把请求打到官方端点即可，不需要中间代理进程，也不需要 hook 客户端。

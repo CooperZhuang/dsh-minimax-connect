@@ -11,6 +11,26 @@ Points-based account: no API key, it spends the MiniMax Code subscription's cred
 
 ---
 
+## This fork: DSH 0.2.1-rc.2
+
+Upstream 0.1.0 targets the 0.2.0 line. On `DSH Desktop Beta 2.0.18-beta.1 / kernel 0.2.1-rc.2` three things broke; this fork fixes them and ships regression tests:
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `Image request width must be a positive integer.` | A 0.2.x adapter derives each image target from `profile.requestImagePixelBudget` / `requestImageMaxBytes`; unset → `target.width === undefined` | Declare `IMAGE_BUDGET` and wire the 0.2.x `resolveImageAccess` hook (`resolveImageAttachmentAccess(attachments, mapHostPath, ref)`) |
+| Thinking levels do not match the wanted ladder | No `thinkingLevelMap` on the model descriptor, so pi-ai uses its default ladder | Declare `xhigh` / `max` explicitly (every other level pinned to `null`) with `compat.forceAdaptiveThinking`; `off` must stay `null` because the gateway rejects `thinking.type="disabled"` |
+| `host settings service has no installSection API` | 0.2.1 has no `installSection` | Use `settings.configure({ auto: false })`; the card keeps using its own `/plugins/...` routes |
+| `configurable provider "minimax" is already declared` | llm-pi-ai declares every catalog provider, `minimax` included | Route id is now **`minimax-code`**, so the Models page points at this plugin rather than the API-key route |
+
+The picker group is **MiniMax Code**; the reasoning ladder is **xhigh / max** (default `max`). With no level selected the request carries no thinking block at all, which is the provider's own default — the same thing the first-party client's `default` does.
+
+```bash
+node test/rc2-fixes.mjs    # ladder, image target, adapter wiring
+node test/host-apply.mjs   # apply(): route id, configurable directory, settings policy, no warnings
+```
+
+---
+
 ## Why no proxy is needed
 
 MiniMax Code's inference endpoint **already speaks the Anthropic Messages protocol**, and DSH's `pi-ai` supports that protocol natively. Requests therefore go straight to the official endpoint — no intermediary process, no client hooking.
